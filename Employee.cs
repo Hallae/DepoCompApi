@@ -1,16 +1,12 @@
 ﻿namespace DepoCompApi
 {
-   
-        public class Employee
-        {
-        public int Id { get; set; }
-        public string Firstname { get; set; }
+    public class Employee
+    {
+        public int id { get; set; }
+        public string name { get; set; }
         public DateTime DateOfBirth { get; set; }
-        public int PasportSeries { get; set; }
-        public int PasportNumber { get; set; }
+        public int PassportSeries { get; set; }
+        public int PassportNumber { get; set; }
 
-
-        }
-
-
+    }
 }
