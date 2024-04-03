@@ -10,39 +10,49 @@ namespace DepoCompApi.Controllers
     [ApiController]
     public class EmployeeController : ControllerBase 
     {
-        
-        private readonly EmployeeContext _employee;
-        public EmployeeController( EmployeeContext employee)
-        {
-            _employee = employee;
 
+        private readonly DataContext _context;
+        public EmployeeController(OrganizationContext organization, DataContext context)
+        {
+            
+            _context = context;
         }
-        [HttpPost("Add")]
-        public async Task<ActionResult<List<Employee>>> Add(Employee employee)
+
+        [HttpGet("EmployeeList")]
+        public async Task<ActionResult<List<Employee>>> Get()
+        {
+            return Ok(await _context.Employee.ToListAsync());
+        }
+
+         [HttpPost("Add")]
+        public async Task<ActionResult<List<Employee>>> Add(Employee context)
         {
 
 
-            _employee.Employee.Add(_employee);
-            await _employee.SaveChangesAsync();
+        _context.Employee.Add(context);
+        await _context.SaveChangesAsync();
 
-            return Ok(await _employee.Employee.ToListAsync());
+            return Ok(await _context.Employee.ToListAsync());
         }
 
         [HttpPut("Update")]
         public async Task<ActionResult<List<Employee>>> UpdateEmployee(Employee employee)
         {
-            var employeeContext = await _employee.Employee.FindAsync(employee.id);
-            if (employeeContext == null)
+            var dbEmployees = await _context.Employee.FindAsync(employee.id);
+            if (dbEmployees == null)
                 return BadRequest("Employee not found");
 
+            dbEmployees.id = employee.id;
+            dbEmployees.name = employee.name;
+            dbEmployees.PassportNumber= employee.PassportNumber;
+            dbEmployees.PassportSeries= employee.PassportSeries;
+            dbEmployees.DateOfBirth= DateTime.Now;
 
-            employeeContext.name = employee.name;
 
 
+            await _context.SaveChangesAsync();
 
-            await _employee.SaveChangesAsync();
-
-            return Ok(await _employee.Employee.ToListAsync());
+            return Ok(await _context.Employee.ToListAsync());
         }
 
 
@@ -51,15 +61,17 @@ namespace DepoCompApi.Controllers
         [HttpDelete("Delete")]
         public async Task<ActionResult<List<Employee>>> DeleteEmployee(int id)
         {
-            var dbEmployees = await _employee.Employee.FindAsync(id);
+            var dbEmployees = await _context.Employee.FindAsync(id);
             if (dbEmployees == null)
                 return BadRequest("Employee not found");
 
       
-            _employee.Employee.Remove(dbEmployees);
-            await _employee.SaveChangesAsync();
+            _context.Employee.Remove(dbEmployees);
+            await _context.SaveChangesAsync();
 
-            return Ok(await _employee.Employee.ToListAsync());
+            return Ok(await _context.Employee.ToListAsync());
         }
     }
+   
+    
 }

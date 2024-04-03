@@ -13,11 +13,11 @@ namespace DepoCompApi.Controllers
     public class OrganizationController : ControllerBase
     {
         private readonly OrganizationContext _organization;
-        private readonly EmployeeContext _employee;
-        public OrganizationController(OrganizationContext organization, EmployeeContext employee)
+        private readonly DataContext _context;
+        public OrganizationController(OrganizationContext organization, DataContext context)
         {
             _organization = organization;
-            _employee = employee;
+            _context = context;
         }
 
 
