@@ -1,5 +1,6 @@
 global using Microsoft.EntityFrameworkCore;
 using DepoCompApi.Data;
+using Microsoft.AspNetCore.Builder;
 using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,9 +29,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseRouting();
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
