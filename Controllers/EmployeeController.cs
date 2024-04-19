@@ -1,22 +1,27 @@
 ﻿using DepoCompApi.Data;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Formats.Asn1;
 using System.Globalization;
-using static System.Net.Mime.MediaTypeNames;
 using CsvHelper;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Net.Http.Headers;
+using Newtonsoft.Json;
+using static System.Net.Mime.MediaTypeNames;
+
 namespace DepoCompApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class EmployeeController : ControllerBase 
+    public class EmployeeController : ControllerBase
     {
-
         private readonly DataContext _context;
-        public EmployeeController(OrganizationContext organization, DataContext context)
+        public EmployeeController( DataContext context)
         {
-            
             _context = context;
         }
 
@@ -26,13 +31,11 @@ namespace DepoCompApi.Controllers
             return Ok(await _context.Employee.ToListAsync());
         }
 
-         [HttpPost("Add")]
+        [HttpPost("Add")]
         public async Task<ActionResult<List<Employee>>> Add(Employee context)
         {
-
-
-        _context.Employee.Add(context);
-        await _context.SaveChangesAsync();
+            _context.Employee.Add(context);
+            await _context.SaveChangesAsync();
 
             return Ok(await _context.Employee.ToListAsync());
         }
@@ -46,19 +49,14 @@ namespace DepoCompApi.Controllers
 
             dbEmployees.id = employee.id;
             dbEmployees.name = employee.name;
-            dbEmployees.PassportNumber= employee.PassportNumber;
-            dbEmployees.PassportSeries= employee.PassportSeries;
-            dbEmployees.DateOfBirth= DateTime.Now;
-
-
+            dbEmployees.PassportNumber = employee.PassportNumber;
+            dbEmployees.PassportSeries = employee.PassportSeries;
+            dbEmployees.DateOfBirth = DateTime.Now;
 
             await _context.SaveChangesAsync();
 
             return Ok(await _context.Employee.ToListAsync());
         }
-
-
-
 
         [HttpDelete("Delete")]
         public async Task<ActionResult<List<Employee>>> DeleteEmployee(int id)
@@ -67,12 +65,12 @@ namespace DepoCompApi.Controllers
             if (dbEmployees == null)
                 return BadRequest("Employee not found");
 
-      
             _context.Employee.Remove(dbEmployees);
             await _context.SaveChangesAsync();
 
             return Ok(await _context.Employee.ToListAsync());
         }
+
         [HttpGet("Export CSV")]
         public async Task<IActionResult> ExportApplications()
         {
@@ -89,40 +87,47 @@ namespace DepoCompApi.Controllers
                 return File(memoryStream.ToArray(), "text/csv", "applications.csv");
             }
         }
+
         [HttpPost("Import CSV")]
         public async Task<IActionResult> ImportCsv(IFormFile file)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("File not selected");
 
-
-
-            try
+            using (var transaction = _context.Database.BeginTransaction())
             {
-                using (var reader = new StreamReader(file.OpenReadStream()))
-                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                try
                 {
-                    var records = csv.GetRecords<Employee>();
-                    foreach (var record in records)
+                    using (var reader = new StreamReader(file.OpenReadStream()))
+                    using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                     {
-                        // Process each record here
-                        // For example, add to the database or perform other operations
+                        var records = csv.GetRecords<Employee>();
+                        foreach (var record in records)
+                        {
+                            var existingEmployee = await _context.Employee.FindAsync(record.id);
+                            if (existingEmployee == null)
+                            {
+                                _context.Employee.Add(record);
+                            }
+                            else
+                            {
+                                // Handle the case where the employee already exists, e.g., update it
+                            }
+                        }
+
+                        await _context.SaveChangesAsync();
                     }
 
-                    await _context.SaveChangesAsync();
+                    transaction.Commit();
                 }
-            }
-            catch (Exception ex)
-            {
-                // Log the exception for debugging purposes
-                // Return a generic error message to the client
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing the file.");
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing the file.");
+                }
             }
 
             return Ok(await _context.Employee.ToListAsync());
         }
-
     }
-
-
 }

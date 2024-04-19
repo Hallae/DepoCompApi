@@ -6,6 +6,18 @@ using System.Diagnostics;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "MyPolicy",
+        policy =>
+        {
+            policy.WithOrigins(
+
+                      "https://localhost:7106/api/Employee/Import")
+                    .WithMethods("PUT", "DELETE", "GET", "POST")
+                    .AllowAnyHeader(); // Allows any header in the request
+        });
+});
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -16,10 +28,7 @@ builder.Services.AddDbContext<DataContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
-builder.Services.AddDbContext<OrganizationContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("OrganizationConnection"));
-});
+
 
 var app = builder.Build();
 
@@ -30,6 +39,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseRouting();
+app.UseCors("MyPolicy");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

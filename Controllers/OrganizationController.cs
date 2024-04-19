@@ -12,24 +12,24 @@ namespace DepoCompApi.Controllers
     [ApiController]
     public class OrganizationController : ControllerBase
     {
-        private readonly OrganizationContext _organization;
-        private readonly DataContext _context;
-        public OrganizationController(OrganizationContext organization, DataContext context)
-        {
-            _organization = organization;
-            _context = context;
-        }
+       
 
 
-        [HttpGet]
-        public async Task<ActionResult<List<Organization>>> Get()
+        [HttpGet("Organization")]
+        public ActionResult<IEnumerable<Organization>> GetOrganization()
         {
 
-            return Ok(await _organization.Organization.ToListAsync());
+            var organization = new List<Organization>
+            {
+               new Organization{ Name = "Orbiters", LegalAddress = "123 Main St, Anytown, USA", ActualAdress = "123 Main St, Anytown, USA" }
+
+
+            };
+            return organization;
         }
 
+      
 
 
-        
     }
 }
